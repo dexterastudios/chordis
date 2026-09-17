@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chordis</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+--bg-rail:#1e1f22;
+--bg-side:#2b2d31;
+--bg-main:#313338;
+--bg-input:#383a40;
+--bg-hover:#35373c;
+--bg-active:#404249;
+--bg-float:#111214;
+--txt:#dbdee1;
+--txt-dim:#949ba4;
+--txt-bright:#f2f3f5;
+--accent:#5865f2;
+--accent-hover:#4752c4;
+--green:#23a55a;
+--red:#da373c;
+--yellow:#f0b232;
+--border:#26272b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+font-family:"gg sans","Segoe UI",Helvetica,Arial,sans-serif;
+background:var(--bg-main);
+color:var(--txt);
+overflow:hidden;
+-webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;outline:none;border:none}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#1a1b1e;border-radius:4px}
+.hidden{display:none !important}
+
+#auth{
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,#404eed,#5865f2 40%,#3b41a8);
+}
+.auth-card{
+width:100%;
+max-width:420px;
+background:var(--bg-main);
+border-radius:8px;
+padding:32px;
+box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.auth-card h1{font-size:24px;color:var(--txt-bright);text-align:center;margin-bottom:6px}
+.auth-card p.sub{text-align:center;color:var(--txt-dim);font-size:14px;margin-bottom:22px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--txt-dim);margin-bottom:8px}
+.field input{
+width:100%;
+background:var(--bg-float);
+color:var(--txt-bright);
+padding:10px;
+border-radius:4px;
+font-size:15px;
+border:1px solid transparent;
+}
+.field input:focus{border-color:var(--accent)}
+.btn{
+width:100%;
+background:var(--accent);
+color:#fff;
+padding:11px;
+border-radius:4px;
+font-size:15px;
+font-weight:600;
+transition:background .15s;
+}
+.btn:hover{background:var(--accent-hover)}
+.btn.sec{background:var(--bg-input)}
+.btn.sec:hover{background:var(--bg-active)}
+.btn.danger{background:var(--red)}
+.link{color:#00a8fc;font-size:14px;cursor:pointer}
+.link:hover{text-decoration:underline}
+.auth-msg{font-size:13px;color:var(--red);min-height:18px;margin-bottom:10px;text-align:center}
+.auth-msg.ok{color:var(--green)}
+.auth-foot{margin-top:14px;font-size:14px;color:var(--txt-dim)}
+
+#app{height:100%;display:flex}
+
+#rail{
+width:72px;
+background:var(--bg-rail);
+display:flex;
+flex-direction:column;
+align-items:center;
+padding:12px 0;
+gap:8px;
+overflow-y:auto;
+flex-shrink:0;
+}
+#rail::-webkit-scrollbar{width:0}
+.rail-item{
+width:48px;
+height:48px;
+border-radius:24px;
+background:var(--bg-side);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:18px;
+font-weight:600;
+color:var(--txt-bright);
+transition:border-radius .15s,background .15s;
+position:relative;
+overflow:hidden;
+flex-shrink:0;
+}
+.rail-item img{width:100%;height:100%;object-fit:cover}
+.rail-item:hover{border-radius:16px;background:var(--accent)}
+.rail-item.active{border-radius:16px;background:var(--accent)}
+.rail-item.home.active,.rail-item.home:hover{background:var(--accent)}
+.rail-item.add{color:var(--green);font-size:26px;line-height:1}
+.rail-item.add:hover{background:var(--green);color:#fff}
+.rail-sep{width:32px;height:2px;background:#35363c;border-radius:1px;flex-shrink:0}
+.rail-badge{
+position:absolute;
+bottom:-2px;right:-2px;
+background:var(--red);
+color:#fff;
+font-size:11px;
+border-radius:10px;
+padding:1px 5px;
+border:3px solid var(--bg-rail);
+}
+
+#sidebar{
+width:240px;
+background:var(--bg-side);
+display:flex;
+flex-direction:column;
+flex-shrink:0;
+}
+.side-head{
+height:48px;
+display:flex;
+align-items:center;
+padding:0 16px;
+font-weight:600;
+color:var(--txt-bright);
+box-shadow:0 1px 0 rgba(0,0,0,.2);
+font-size:15px;
+justify-content:space-between;
+}
+.side-head .code{font-size:11px;color:var(--txt-dim);font-weight:500}
+.side-body{flex:1;overflow-y:auto;padding:8px}
+.side-cat{
+font-size:11px;
+font-weight:700;
+text-transform:uppercase;
+color:var(--txt-dim);
+padding:16px 8px 4px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+.side-cat span.plus{cursor:pointer;font-size:16px}
+.side-cat span.plus:hover{color:var(--txt-bright)}
+.side-item{
+display:flex;
+align-items:center;
+gap:8px;
+padding:7px 8px;
+border-radius:4px;
+color:var(--txt-dim);
+font-size:15px;
+cursor:pointer;
+margin-bottom:2px;
+position:relative;
+}
+.side-item:hover{background:var(--bg-hover);color:var(--txt)}
+.side-item.active{background:var(--bg-active);color:var(--txt-bright)}
+.side-item .ic{width:20px;text-align:center;flex-shrink:0;opacity:.7}
+.side-item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-item .badge{background:var(--red);color:#fff;font-size:11px;border-radius:8px;padding:0 6px;font-weight:700}
+.avatar{
+width:32px;height:32px;border-radius:50%;
+background:var(--accent);
+display:flex;align-items:center;justify-content:center;
+font-size:13px;font-weight:600;color:#fff;
+flex-shrink:0;overflow:hidden;position:relative;
+}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar.sm{width:24px;height:24px;font-size:11px}
+.avatar.lg{width:80px;height:80px;font-size:30px}
+.dot{
+position:absolute;bottom:-1px;right:-1px;
+width:11px;height:11px;border-radius:50%;
+background:var(--txt-dim);
+border:3px solid var(--bg-side);
+}
+.dot.on{background:var(--green)}
+.user-panel{
+height:52px;
+background:#232428;
+display:flex;
+align-items:center;
+padding:0 8px;
+gap:8px;
+}
+.user-panel .meta{flex:1;overflow:hidden}
+.user-panel .nm{font-size:14px;font-weight:600;color:var(--txt-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-panel .id{font-size:11px;color:var(--txt-dim);cursor:pointer}
+.user-panel .id:hover{color:var(--txt)}
+.icon-btn{
+width:32px;height:32px;border-radius:4px;
+display:flex;align-items:center;justify-content:center;
+color:var(--txt-dim);font-size:16px;
+}
+.icon-btn:hover{background:var(--bg-hover);color:var(--txt-bright)}
+.icon-btn.on{color:var(--green)}
+.icon-btn.off{color:var(--red)}
+
+#main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg-main)}
+.top-bar{
+height:48px;
+display:flex;
+align-items:center;
+padding:0 16px;
+gap:8px;
+box-shadow:0 1px 0 rgba(0,0,0,.2);
+flex-shrink:0;
+z-index:2;
+}
+.top-bar .title{font-weight:600;color:var(--txt-bright);font-size:16px;display:flex;align-items:center;gap:8px}
+.top-bar .spacer{flex:1}
+
+#msgs{flex:1;overflow-y:auto;padding:16px 0 8px}
+.msg{
+display:flex;
+gap:16px;
+padding:4px 16px;
+position:relative;
+}
+.msg:hover{background:#2e3035}
+.msg.grouped{padding-top:1px;padding-bottom:1px}
+.msg .gutter{width:40px;flex-shrink:0;display:flex;justify-content:center}
+.msg .gutter .avatar{width:40px;height:40px;font-size:15px;margin-top:2px}
+.msg .gutter .ts{font-size:10px;color:var(--txt-dim);display:none;margin-top:5px}
+.msg.grouped:hover .gutter .ts{display:block}
+.msg .body{flex:1;min-width:0}
+.msg .hd{display:flex;align-items:baseline;gap:8px}
+.msg .hd .who{font-size:15px;font-weight:600;color:var(--txt-bright);cursor:pointer}
+.msg .hd .when{font-size:11px;color:var(--txt-dim)}
+.msg .txt{font-size:15px;line-height:1.375;color:var(--txt);word-wrap:break-word;white-space:pre-wrap}
+.msg .txt img.ce{width:22px;height:22px;vertical-align:-4px;object-fit:contain}
+.msg .txt .big-emoji{font-size:34px;line-height:1.2}
+.msg .edited{font-size:10px;color:var(--txt-dim);margin-left:4px}
+.msg .att{margin-top:6px;max-width:420px}
+.msg .att img{max-width:100%;border-radius:6px;display:block;cursor:pointer}
+.msg .att video,.msg .att audio{max-width:100%;border-radius:6px}
+.msg .att .file{
+display:flex;align-items:center;gap:10px;
+background:var(--bg-side);padding:10px 14px;border-radius:6px;
+border:1px solid var(--border);
+}
+.msg .att .file a{color:#00a8fc;text-decoration:none;font-size:14px}
+.msg .reacts{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.react{
+display:flex;align-items:center;gap:5px;
+background:var(--bg-input);border:1px solid transparent;
+border-radius:8px;padding:2px 7px;font-size:13px;
+}
+.react img{width:16px;height:16px;object-fit:contain}
+.react.mine{background:rgba(88,101,242,.2);border-color:var(--accent)}
+.react:hover{border-color:var(--txt-dim)}
+.msg-tools{
+position:absolute;top:-14px;right:16px;
+background:var(--bg-side);border:1px solid var(--border);
+border-radius:6px;display:none;
+}
+.msg:hover .msg-tools{display:flex}
+.msg-tools button{padding:5px 8px;font-size:14px;color:var(--txt-dim)}
+.msg-tools button:hover{color:var(--txt-bright);background:var(--bg-hover)}
+.sys-msg{text-align:center;color:var(--txt-dim);font-size:13px;padding:8px}
+
+.composer-wrap{padding:0 16px 22px;flex-shrink:0;position:relative}
+.reply-bar{
+background:var(--bg-input);border-radius:8px 8px 0 0;
+padding:6px 14px;font-size:13px;color:var(--txt-dim);
+display:flex;justify-content:space-between;align-items:center;
+}
+.composer{
+background:var(--bg-input);
+border-radius:8px;
+display:flex;
+align-items:flex-end;
+padding:0 8px;
+}
+.composer.with-reply{border-radius:0 0 8px 8px}
+.composer textarea{
+flex:1;
+background:transparent;
+color:var(--txt-bright);
+resize:none;
+padding:11px 8px;
+font-size:15px;
+line-height:1.375;
+max-height:180px;
+}
+.composer textarea::placeholder{color:var(--txt-dim)}
+.composer .tool{
+width:40px;height:44px;
+display:flex;align-items:center;justify-content:center;
+font-size:20px;color:var(--txt-dim);
+}
+.composer .tool:hover{color:var(--txt-bright)}
+.typing{font-size:12px;color:var(--txt-dim);height:16px;padding:2px 4px}
+
+#emoji-pop{
+position:absolute;
+bottom:78px;right:16px;
+width:360px;height:400px;
+background:var(--bg-float);
+border-radius:8px;
+box-shadow:0 8px 20px rgba(0,0,0,.5);
+display:flex;flex-direction:column;
+overflow:hidden;
+z-index:20;
+}
+#emoji-pop .ep-head{padding:10px;display:flex;gap:8px}
+#emoji-pop .ep-head input{
+flex:1;background:var(--bg-main);color:var(--txt-bright);
+padding:7px 10px;border-radius:4px;font-size:14px;
+}
+#emoji-pop .ep-tabs{display:flex;gap:4px;padding:0 10px 8px}
+#emoji-pop .ep-tabs button{padding:5px 10px;border-radius:4px;font-size:13px;color:var(--txt-dim);background:var(--bg-main)}
+#emoji-pop .ep-tabs button.active{background:var(--accent);color:#fff}
+#emoji-pop .ep-body{flex:1;overflow-y:auto;padding:0 10px 10px}
+.ep-cat{font-size:11px;text-transform:uppercase;font-weight:700;color:var(--txt-dim);padding:8px 2px 4px}
+.ep-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.ep-grid button{
+height:38px;border-radius:4px;font-size:22px;
+display:flex;align-items:center;justify-content:center;
+}
+.ep-grid button:hover{background:var(--bg-hover)}
+.ep-grid button img{width:26px;height:26px;object-fit:contain}
+#emoji-pop .ep-foot{padding:8px 10px;border-top:1px solid var(--border)}
+
+#members{
+width:240px;
+background:var(--bg-side);
+flex-shrink:0;
+overflow-y:auto;
+padding:16px 8px;
+}
+.mem{
+display:flex;align-items:center;gap:12px;
+padding:5px 8px;border-radius:4px;cursor:pointer;
+}
+.mem:hover{background:var(--bg-hover)}
+.mem .nm{font-size:15px;color:var(--txt-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mem:hover .nm{color:var(--txt)}
+.mem .dot{border-color:var(--bg-side)}
+
+#friends-view{flex:1;overflow-y:auto;padding:16px 30px}
+.fr-tabs{display:flex;gap:6px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.fr-tabs button{padding:6px 12px;border-radius:4px;font-size:14px;color:var(--txt-dim)}
+.fr-tabs button:hover{background:var(--bg-hover);color:var(--txt-bright)}
+.fr-tabs button.active{background:var(--bg-active);color:var(--txt-bright)}
+.fr-tabs button.addbtn{background:var(--green);color:#fff}
+.fr-add{background:var(--bg-side);padding:16px;border-radius:8px;margin-bottom:20px}
+.fr-add h3{font-size:16px;color:var(--txt-bright);margin-bottom:6px}
+.fr-add p{font-size:13px;color:var(--txt-dim);margin-bottom:12px}
+.fr-add .row{display:flex;gap:8px;background:var(--bg-float);border-radius:8px;padding:6px}
+.fr-add input{flex:1;background:transparent;color:var(--txt-bright);padding:8px;font-size:15px}
+.fr-add .btn{width:auto;padding:8px 16px;font-size:14px}
+.fr-row{
+display:flex;align-items:center;gap:12px;
+padding:12px 8px;border-top:1px solid #3f4147;
+}
+.fr-row .meta{flex:1;min-width:0}
+.fr-row .nm{font-size:15px;font-weight:600;color:var(--txt-bright)}
+.fr-row .sub{font-size:12px;color:var(--txt-dim)}
+.fr-row .acts{display:flex;gap:6px}
+.fr-row .acts button{
+width:36px;height:36px;border-radius:50%;
+background:var(--bg-rail);display:flex;align-items:center;justify-content:center;
+color:var(--txt-dim);font-size:15px;
+}
+.fr-row .acts button:hover{color:var(--txt-bright)}
+.fr-head{font-size:12px;font-weight:700;text-transform:uppercase;color:var(--txt-dim);margin-bottom:8px}
+.empty{color:var(--txt-dim);font-size:14px;padding:30px 0;text-align:center}
+
+.modal-back{
+position:fixed;inset:0;
+background:rgba(0,0,0,.7);
+display:flex;align-items:center;justify-content:center;
+z-index:100;
+}
+.modal{
+background:var(--bg-main);
+border-radius:8px;
+width:100%;max-width:440px;
+padding:24px;
+max-height:86vh;overflow-y:auto;
+}
+.modal h2{font-size:22px;color:var(--txt-bright);margin-bottom:8px;text-align:center}
+.modal p.md{font-size:14px;color:var(--txt-dim);text-align:center;margin-bottom:18px}
+.modal .acts{display:flex;gap:10px;margin-top:20px}
+.modal .acts .btn{flex:1}
+.pick-list{max-height:240px;overflow-y:auto;border-radius:6px;background:var(--bg-float);padding:6px}
+.pick{display:flex;align-items:center;gap:10px;padding:7px;border-radius:4px;cursor:pointer}
+.pick:hover{background:var(--bg-hover)}
+.pick.sel{background:var(--accent)}
+.pick .nm{font-size:14px;color:var(--txt-bright)}
+.emoji-manage{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.emoji-manage .em{
+background:var(--bg-float);border-radius:6px;padding:6px;
+display:flex;flex-direction:column;align-items:center;gap:4px;width:74px;
+}
+.emoji-manage .em img{width:32px;height:32px;object-fit:contain}
+.emoji-manage .em span{font-size:10px;color:var(--txt-dim);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emoji-manage .em button{font-size:10px;color:var(--red)}
+
+#call-layer{
+position:fixed;inset:0;
+background:#000000e6;
+z-index:90;
+display:flex;flex-direction:column;
+}
+#call-grid{
+flex:1;
+display:grid;
+gap:10px;
+padding:20px;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+align-content:center;
+overflow:auto;
+}
+.tile{
+background:var(--bg-rail);
+border-radius:10px;
+position:relative;
+aspect-ratio:16/9;
+overflow:hidden;
+display:flex;align-items:center;justify-content:center;
+border:2px solid transparent;
+}
+.tile.speaking{border-color:var(--green)}
+.tile video{width:100%;height:100%;object-fit:cover;background:#000}
+.tile .ph{font-size:34px}
+.tile .lbl{
+position:absolute;bottom:8px;left:8px;
+background:rgba(0,0,0,.6);
+padding:3px 8px;border-radius:4px;
+font-size:12px;color:#fff;
+}
+#call-bar{
+padding:18px;display:flex;justify-content:center;gap:14px;align-items:center;
+background:var(--bg-rail);
+}
+.call-btn{
+width:52px;height:52px;border-radius:50%;
+background:var(--bg-input);
+display:flex;align-items:center;justify-content:center;
+font-size:20px;color:var(--txt-bright);
+}
+.call-btn:hover{background:var(--bg-active)}
+.call-btn.off{background:#fff;color:#000}
+.call-btn.hang{background:var(--red)}
+#call-title{position:absolute;top:18px;left:24px;color:#fff;font-size:15px;font-weight:600}
+
+#ring{
+position:fixed;bottom:20px;left:20px;
+background:var(--bg-float);
+border-radius:10px;padding:16px;
+width:300px;z-index:95;
+box-shadow:0 8px 20px rgba(0,0,0,.6);
+}
+#ring .rt{font-size:15px;color:var(--txt-bright);font-weight:600;margin-bottom:4px}
+#ring .rs{font-size:13px;color:var(--txt-dim);margin-bottom:12px}
+#ring .ra{display:flex;gap:10px}
+#ring .ra button{flex:1;padding:9px;border-radius:4px;font-size:14px;color:#fff}
+#ring .ra .acc{background:var(--green)}
+#ring .ra .dec{background:var(--red)}
+
+#toasts{position:fixed;top:16px;right:16px;z-index:120;display:flex;flex-direction:column;gap:8px}
+.toast{
+background:var(--bg-float);
+border-left:4px solid var(--accent);
+border-radius:6px;
+padding:12px 14px;
+width:300px;
+box-shadow:0 6px 16px rgba(0,0,0,.5);
+cursor:pointer;
+}
+.toast .tt{font-size:14px;font-weight:600;color:var(--txt-bright)}
+.toast .tb{font-size:13px;color:var(--txt-dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#ctx{
+position:fixed;z-index:130;
+background:var(--bg-float);
+border-radius:6px;padding:6px;
+min-width:190px;
+box-shadow:0 6px 16px rgba(0,0,0,.5);
+}
+#ctx button{
+display:block;width:100%;text-align:left;
+padding:7px 9px;border-radius:4px;
+font-size:14px;color:var(--txt);
+}
+#ctx button:hover{background:var(--accent);color:#fff}
+#ctx button.danger{color:var(--red)}
+#ctx button.danger:hover{background:var(--red);color:#fff}
+
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:140;display:flex;align-items:center;justify-content:center}
+#lightbox img{max-width:92%;max-height:92%;border-radius:6px}
+
+@media (max-width:900px){
+#members{display:none}
+#sidebar{width:200px}
+}
+@media (max-width:640px){
+#rail{width:58px}
+.rail-item{width:42px;height:42px}
+#sidebar{width:160px}
+#friends-view{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <div class="auth-card">
+    <h1 id="auth-title">Welcome back!</h1>
+    <p class="sub" id="auth-sub">We're so excited to see you again</p>
+    <div class="auth-msg" id="auth-msg"></div>
+    <div class="field" id="f-username">
+      <label>Username</label>
+      <input id="in-username" type="text" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="in-email" type="email" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="in-password" type="password" autocomplete="current-password">
+    </div>
+    <button class="btn" id="btn-auth">Log In</button>
+    <div class="auth-foot">
+      <span id="auth-foot-txt">Need an account?</span>
+      <span class="link" id="auth-toggle">Register</span>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="rail"></div>
+  <div id="sidebar">
+    <div class="side-head"><span id="side-title">Direct Messages</span><span class="code" id="side-code"></span></div>
+    <div class="side-body" id="side-body"></div>
+    <div class="user-panel">
+      <div class="avatar" id="me-avatar"><div class="dot on"></div></div>
+      <div class="meta">
+        <div class="nm" id="me-name"></div>
+        <div class="id" id="me-id" title="Click to copy your friend ID"></div>
+      </div>
+      <button class="icon-btn" id="btn-sound" title="Toggle sounds">&#128266;</button>
+      <button class="icon-btn" id="btn-settings" title="Settings">&#9881;</button>
+    </div>
+  </div>
+  <div id="main">
+    <div class="top-bar">
+      <div class="title" id="top-title">Friends</div>
+      <div class="spacer"></div>
+      <button class="icon-btn hidden" id="btn-voice" title="Start voice call">&#9742;</button>
+      <button class="icon-btn hidden" id="btn-video" title="Start video call">&#127909;</button>
+      <button class="icon-btn hidden" id="btn-members" title="Toggle member list">&#128101;</button>
+    </div>
+    <div id="friends-view"></div>
+    <div id="chat-view" class="hidden" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <div id="msgs"></div>
+      <div class="typing" id="typing"></div>
+      <div class="composer-wrap">
+        <div class="reply-bar hidden" id="reply-bar">
+          <span id="reply-text"></span>
+          <button id="reply-cancel">&#10005;</button>
+        </div>
+        <div class="composer" id="composer">
+          <button class="tool" id="btn-attach" title="Upload a file">&#43;</button>
+          <textarea id="input" rows="1" placeholder="Message"></textarea>
+          <button class="tool" id="btn-emoji" title="Emoji">&#128512;</button>
+          <button class="tool" id="btn-send" title="Send">&#10148;</button>
+        </div>
+        <input type="file" id="file-input" class="hidden">
+      </div>
+    </div>
+  </div>
+  <div id="members" class="hidden"></div>
+</div>
+
+<div id="emoji-pop" class="hidden">
+  <div class="ep-head"><input id="ep-search" placeholder="Search emoji"></div>
+  <div class="ep-tabs">
+    <button data-tab="std" class="active">Standard</button>
+    <button data-tab="custom">Custom</button>
+  </div>
+  <div class="ep-body" id="ep-body"></div>
+  <div class="ep-foot"><button class="btn sec" id="ep-manage">Manage custom emojis</button></div>
+</div>
+
+<div id="call-layer" class="hidden">
+  <div id="call-title"></div>
+  <div id="call-grid"></div>
+  <div id="call-bar">
+    <button class="call-btn" id="cb-mic" title="Mute">&#127908;</button>
+    <button class="call-btn" id="cb-cam" title="Camera">&#128247;</button>
+    <button class="call-btn" id="cb-screen" title="Share screen">&#128421;</button>
+    <button class="call-btn hang" id="cb-hang" title="Leave">&#9742;</button>
+  </div>
+</div>
+
+<div id="ring" class="hidden">
+  <div class="rt" id="ring-title"></div>
+  <div class="rs" id="ring-sub"></div>
+  <div class="ra">
+    <button class="acc" id="ring-acc">Join</button>
+    <button class="dec" id="ring-dec">Dismiss</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<div id="modal-root"></div>
+
+<script>
+const SUPABASE_URL = "https://whwilpuynwudlddbxmwk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_iTuvrnFtnRTPtsd8JWqFTg_dTB2yTzr";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  realtime: { params: { eventsPerSecond: 20 } }
+});
+
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, html) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html !== undefined) n.innerHTML = html;
+  return n;
+};
+const esc = (s) => (s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const S = {
+  me: null,
+  profile: null,
+  servers: [],
+  channels: {},
+  conversations: [],
+  convMembers: {},
+  serverMembers: {},
+  profiles: {},
+  friends: [],
+  requests: [],
+  blocks: [],
+  ignores: [],
+  emojis: [],
+  view: "friends",
+  serverId: null,
+  channelId: null,
+  convId: null,
+  messages: [],
+  unread: {},
+  online: {},
+  replyTo: null,
+  soundOn: true,
+  frTab: "all",
+  epTab: "std",
+  showMembers: true
+};
+
+const EMOJI_SETS = [
+  ["Smileys", ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥵","🥶","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","🤖"]],
+  ["People", ["👋","🤚","🖐️","✋","🖖","👌","🤏","✌️","🤞","🤟","🤘","🤙","👈","👉","👆","👇","☝️","👍","👎","✊","👊","🤛","🤜","👏","🙌","👐","🤲","🤝","🙏","💪","🦵","🦶","👂","👃","🧠","🦷","👀","👁️","👅","👄","💋","🧑","👶","👦","👧","👨","👩","🧔","👴","👵","🙍","🙎","🙅","🙆","💁","🙋","🧏","🙇","🤦","🤷","👮","🕵️","💂","👷","🤴","👸","👳","👲","🧕","🤵","👰","🤰","🎅","🧙","🧚","🧛","🧜","🧝","🧞","🧟"]],
+  ["Nature", ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦗","🕷️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🐘","🦛","🐪","🦒","🦘","🐃","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🐈","🌵","🎄","🌲","🌳","🌴","🌱","🌿","☘️","🍀","🎍","🍃","🍂","🍁","🌺","🌸","🌼","🌻","🌞","🌝","🌛","⭐","🌟","✨","⚡","🔥","🌈","☀️","⛅","☁️","🌧️","⛈️","❄️","💧","🌊"]],
+  ["Food", ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🧀","🥚","🍳","🧈","🥞","🧇","🥓","🍔","🍟","🍕","🌭","🥪","🌮","🌯","🥙","🍜","🍝","🍣","🍱","🍤","🍙","🍚","🍛","🍲","🥘","🍦","🍩","🍪","🎂","🍰","🧁","🍫","🍬","🍭","🍮","☕","🍵","🧃","🥤","🍺","🍻","🥂","🍷","🥃","🍸"]],
+  ["Activity", ["⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉","🥏","🎱","🏓","🏸","🥅","🏒","🏑","🥍","🏏","🥊","🥋","🎽","⛸️","🥌","🎿","⛷️","🏂","🏋️","🤼","🤸","⛹️","🤺","🤾","🏌️","🏇","🧘","🏄","🏊","🤽","🚣","🧗","🚴","🚵","🎯","🎮","🕹️","🎲","♟️","🎰","🎳","🎭","🎨","🎤","🎧","🎼","🎹","🥁","🎷","🎺","🎸","🎻","🏆","🥇","🥈","🥉","🎖️"]],
+  ["Objects", ["⌚","📱","💻","⌨️","🖥️","🖨️","🖱️","💽","💾","💿","📀","📷","📸","📹","🎥","📞","☎️","📟","📠","📺","📻","⏰","⏱️","⌛","🔋","🔌","💡","🔦","🕯️","🧯","🛢️","💸","💵","💴","💶","💷","💰","💳","💎","⚖️","🔧","🔨","⚒️","🛠️","⛏️","🔩","⚙️","🧱","⛓️","🧲","🔫","💣","🔪","🗡️","🛡️","🚬","⚰️","🔮","📿","💈","🔭","🔬","🕳️","💊","💉","🩸","🌡️","🧹","🧺","🔑","🗝️","🚪","🛋️","🛏️","🚽","🚿","🛁","🧼","🧽","🎁","🎈","🎉","🎊","🎏","🎀","📦","📫","📮","📝","✏️","📌","📎","📊","📈","📉","📋","📁","🗂️","📅","📓","📖","📚","🔖","🔗","📰"]],
+  ["Symbols", ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕","💞","💓","💗","💖","💘","💝","💯","💢","💥","💫","💦","💨","🕳️","💬","💭","🗯️","♠️","♥️","♦️","♣️","🃏","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟥","🟧","🟨","🟩","🟦","🟪","⬛","⬜","🔶","🔷","🔸","🔹","✅","❌","❎","➕","➖","➗","✖️","❓","❔","❗","❕","⭕","🚫","💤","🔔","🔕","🎵","🎶","⚠️","♻️","🔱","⚜️","🔰","✔️","☑️","🆗","🆕","🆒","🆓","🔝","🔞","📵","🈵","🔆","🔅","➰","➿","🔃","🔄","🔙","🔚","🔛","🔜","🔀","🔁","🔂","▶️","⏸️","⏹️","⏺️","⏭️","⏮️","⏩","⏪","🔼","🔽"]]
+];
+
+let audioCtx = null;
+function tone(freq, dur, type, vol) {
+  if (!S.soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type || "sine";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol || 0.12, audioCtx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + dur + 0.02);
+  } catch (e) {}
+}
+const sndIncoming = () => { tone(660, 0.12); setTimeout(() => tone(880, 0.16), 100); };
+const sndOutgoing = () => tone(520, 0.08, "triangle", 0.07);
+const sndAlert = () => { tone(740, 0.14, "square", 0.08); setTimeout(() => tone(980, 0.2, "square", 0.08), 130); };
+const sndJoin = () => { tone(440, 0.1); setTimeout(() => tone(660, 0.12), 90); setTimeout(() => tone(880, 0.14), 180); };
+const sndLeave = () => { tone(660, 0.12); setTimeout(() => tone(400, 0.18), 110); };
+let ringTimer = null;
+function startRingTone() {
+  stopRingTone();
+  const beat = () => { tone(620, 0.35, "sine", 0.1); setTimeout(() => tone(760, 0.35, "sine", 0.1), 380); };
+  beat();
+  ringTimer = setInterval(beat, 1800);
+}
+function stopRingTone() { if (ringTimer) { clearInterval(ringTimer); ringTimer = null; } }
+
+function toast(title, body, onClick) {
+  const t = el("div", "toast");
+  t.appendChild(el("div", "tt", esc(title)));
+  if (body) t.appendChild(el("div", "tb", esc(body)));
+  t.onclick = () => { t.remove(); if (onClick) onClick(); };
+  $("toasts").appendChild(t);
+  setTimeout(() => t.remove(), 6000);
+  if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+    try { new Notification(title, { body: body || "" }); } catch (e) {}
+  }
+}
+
+function openModal(builder) {
+  const back = el("div", "modal-back");
+  const box = el("div", "modal");
+  back.appendChild(box);
+  back.onclick = (e) => { if (e.target === back) back.remove(); };
+  $("modal-root").appendChild(back);
+  builder(box, () => back.remove());
+  return back;
+}
+
+function contextMenu(x, y, items) {
+  const old = $("ctx");
+  if (old) old.remove();
+  const m = el("div");
+  m.id = "ctx";
+  items.forEach((it) => {
+    if (!it) return;
+    const b = el("button", it.danger ? "danger" : "", esc(it.label));
+    b.onclick = () => { m.remove(); it.fn(); };
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.min(x, window.innerWidth - r.width - 8) + "px";
+  m.style.top = Math.min(y, window.innerHeight - r.height - 8) + "px";
+  setTimeout(() => {
+    const close = () => { m.remove(); document.removeEventListener("click", close); };
+    document.addEventListener("click", close);
+  }, 0);
+}
+
+function lightbox(src) {
+  const lb = el("div");
+  lb.id = "lightbox";
+  const img = el("img");
+  img.src = src;
+  lb.appendChild(img);
+  lb.onclick = () => lb.remove();
+  document.body.appendChild(lb);
+}
+
+let authMode = "login";
+function setAuthMode(m) {
+  authMode = m;
+  $("f-username").classList.toggle("hidden", m === "login");
+  $("auth-title").textContent = m === "login" ? "Welcome back!" : "Create an account";
+  $("auth-sub").textContent = m === "login" ? "We're so excited to see you again" : "Pick a username and get started";
+  $("btn-auth").textContent = m === "login" ? "Log In" : "Register";
+  $("auth-foot-txt").textContent = m === "login" ? "Need an account?" : "Already have one?";
+  $("auth-toggle").textContent = m === "login" ? "Register" : "Log In";
+  $("auth-msg").textContent = "";
+}
+$("auth-toggle").onclick = () => setAuthMode(authMode === "login" ? "register" : "login");
+
+function authMsg(text, ok) {
+  const n = $("auth-msg");
+  n.textContent = text;
+  n.className = "auth-msg" + (ok ? " ok" : "");
+}
+
+$("btn-auth").onclick = async () => {
+  const email = $("in-email").value.trim();
+  const password = $("in-password").value;
+  const username = $("in-username").value.trim();
+  if (!email || !password) return authMsg("Email and password are required");
+  $("btn-auth").disabled = true;
+  if (authMode === "register") {
+    if (!username) { $("btn-auth").disabled = false; return authMsg("Pick a username"); }
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+    $("btn-auth").disabled = false;
+    if (error) return authMsg(error.message);
+    if (!data.session) return authMsg("Check your email to confirm your account, then log in.", true);
+    boot();
+  } else {
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    $("btn-auth").disabled = false;
+    if (error) return authMsg(error.message);
+    boot();
+  }
+};
+[$("in-email"), $("in-password"), $("in-username")].forEach((n) => {
+  n.addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-auth").click(); });
+});
+
+function initials(name) {
+  if (!name) return "?";
+  const p = name.trim().split(/\s+/);
+  return (p.length > 1 ? p[0][0] + p[1][0] : name.slice(0, 2)).toUpperCase();
+}
+function avatarHTML(p, cls) {
+  const name = p ? (p.display_name || p.username) : "?";
+  const img = p && p.avatar_url ? '<img src="' + esc(p.avatar_url) + '">' : esc(initials(name));
+  const on = p && S.online[p.id] ? " on" : "";
+  return '<div class="avatar ' + (cls || "") + '">' + img + '<div class="dot' + on + '"></div></div>';
+}
+function nameOf(id) {
+  const p = S.profiles[id];
+  return p ? (p.display_name || p.username) : "Unknown";
+}
+function isBlocked(id) { return S.blocks.indexOf(id) !== -1; }
+function isIgnored(id) { return S.ignores.indexOf(id) !== -1; }
+
+async function cacheProfiles(ids) {
+  const need = ids.filter((i) => i && !S.profiles[i]);
+  if (!need.length) return;
+  const { data } = await sb.from("profiles").select("*").in("id", Array.from(new Set(need)));
+  (data || []).forEach((p) => { S.profiles[p.id] = p; });
+}
+
+async function loadEverything() {
+  const { data: prof } = await sb.from("profiles").select("*").eq("id", S.me).single();
+  S.profile = prof;
+  if (prof) S.profiles[prof.id] = prof;
+
+  const { data: sm } = await sb.from("server_members").select("server_id").eq("user_id", S.me);
+  const sids = (sm || []).map((x) => x.server_id);
+  if (sids.length) {
+    const { data: srv } = await sb.from("servers").select("*").in("id", sids);
+    S.servers = srv || [];
+    const { data: chs } = await sb.from("channels").select("*").in("server_id", sids).order("position");
+    S.channels = {};
+    (chs || []).forEach((c) => { (S.channels[c.server_id] = S.channels[c.server_id] || []).push(c); });
+    const { data: allm } = await sb.from("server_members").select("*").in("server_id", sids);
+    S.serverMembers = {};
+    (allm || []).forEach((m) => { (S.serverMembers[m.server_id] = S.serverMembers[m.server_id] || []).push(m); });
+    await cacheProfiles((allm || []).map((m) => m.user_id));
+  } else {
+    S.servers = []; S.channels = {}; S.serverMembers = {};
+  }
+
+  const { data: cm } = await sb.from("conversation_members").select("conversation_id").eq("user_id", S.me);
+  const cids = (cm || []).map((x) => x.conversation_id);
+  if (cids.length) {
+    const { data: convs } = await sb.from("conversations").select("*").in("id", cids);
+    S.conversations = convs || [];
+    const { data: allcm } = await sb.from("conversation_members").select("*").in("conversation_id", cids);
+    S.convMembers = {};
+    (allcm || []).forEach((m) => { (S.convMembers[m.conversation_id] = S.convMembers[m.conversation_id] || []).push(m); });
+    await cacheProfiles((allcm || []).map((m) => m.user_id));
+  } else {
+    S.conversations = []; S.convMembers = {};
+  }
+
+  const { data: fs } = await sb.from("friendships").select("*").or("user_a.eq." + S.me + ",user_b.eq." + S.me);
+  S.friends = (fs || []).map((f) => (f.user_a === S.me ? f.user_b : f.user_a));
+  await cacheProfiles(S.friends);
+
+  const { data: fr } = await sb.from("friend_requests").select("*").eq("status", "pending").or("sender_id.eq." + S.me + ",receiver_id.eq." + S.me);
+  S.requests = fr || [];
+  await cacheProfiles(S.requests.map((r) => r.sender_id).concat(S.requests.map((r) => r.receiver_id)));
+
+  const { data: bl } = await sb.from("blocks").select("blocked_id").eq("blocker_id", S.me);
+  S.blocks = (bl || []).map((b) => b.blocked_id);
+  await cacheProfiles(S.blocks);
+
+  const { data: ig } = await sb.from("ignores").select("target_id").eq("user_id", S.me);
+  S.ignores = (ig || []).map((i) => i.target_id);
+
+  await loadEmojis();
+}
+
+async function loadEmojis() {
+  const sids = S.servers.map((s) => s.id);
+  let q = sb.from("emojis").select("*");
+  const { data } = await q;
+  S.emojis = (data || []).filter((e) => !e.server_id || sids.indexOf(e.server_id) !== -1);
+}
+
+function renderRail() {
+  const rail = $("rail");
+  rail.innerHTML = "";
+  const home = el("div", "rail-item home" + (S.serverId === null ? " active" : ""), "&#9993;");
+  home.title = "Direct Messages";
+  const dmUnread = Object.keys(S.unread).reduce((a, k) => a + (k.indexOf("c:") === 0 ? S.unread[k] : 0), 0);
+  const reqCount = S.requests.filter((r) => r.receiver_id === S.me).length;
+  if (dmUnread + reqCount > 0) home.appendChild(el("div", "rail-badge", String(dmUnread + reqCount)));
+  home.onclick = () => openHome();
+  rail.appendChild(home);
+  rail.appendChild(el("div", "rail-sep"));
+
+  S.servers.forEach((s) => {
+    const item = el("div", "rail-item" + (S.serverId === s.id ? " active" : ""));
+    item.title = s.name;
+    item.innerHTML = s.icon_url ? '<img src="' + esc(s.icon_url) + '">' : esc(initials(s.name));
+    const cnt = (S.channels[s.id] || []).reduce((a, c) => a + (S.unread["ch:" + c.id] || 0), 0);
+    if (cnt) item.appendChild(el("div", "rail-badge", String(cnt)));
+    item.onclick = () => openServer(s.id);
+    item.oncontextmenu = (e) => {
+      e.preventDefault();
+      contextMenu(e.clientX, e.clientY, [
+        { label: "Copy invite code", fn: () => { navigator.clipboard.writeText(s.invite_code); toast("Copied", s.invite_code); } },
+        { label: "Create channel", fn: () => modalCreateChannel(s.id) },
+        { label: "Custom emojis", fn: () => modalEmojis(s.id) },
+        s.owner_id === S.me
+          ? { label: "Delete server", danger: true, fn: async () => { await sb.from("servers").delete().eq("id", s.id); await loadEverything(); openHome(); } }
+          : { label: "Leave server", danger: true, fn: async () => { await sb.from("server_members").delete().eq("server_id", s.id).eq("user_id", S.me); await loadEverything(); openHome(); } }
+      ]);
+    };
+    rail.appendChild(item);
+  });
+
+  const add = el("div", "rail-item add", "+");
+  add.title = "Add a server";
+  add.onclick = modalServer;
+  rail.appendChild(add);
+}
+
+function renderSidebar() {
+  const body = $("side-body");
+  body.innerHTML = "";
+  if (S.serverId) {
+    const srv = S.servers.find((s) => s.id === S.serverId);
+    $("side-title").textContent = srv ? srv.name : "";
+    $("side-code").textContent = srv ? srv.invite_code : "";
+    const cat = el("div", "side-cat", "<span>Channels</span>");
+    const plus = el("span", "plus", "+");
+    plus.onclick = () => modalCreateChannel(S.serverId);
+    cat.appendChild(plus);
+    body.appendChild(cat);
+    (S.channels[S.serverId] || []).forEach((c) => {
+      const it = el("div", "side-item" + (S.channelId === c.id ? " active" : ""));
+      it.appendChild(el("div", "ic", c.kind === "voice" ? "&#128266;" : "#"));
+      it.appendChild(el("div", "nm", esc(c.name)));
+      const u = S.unread["ch:" + c.id];
+      if (u) it.appendChild(el("div", "badge", String(u)));
+      it.onclick = () => (c.kind === "voice" ? joinVoiceChannel(c) : openChannel(c.id));
+      it.oncontextmenu = (e) => {
+        e.preventDefault();
+        contextMenu(e.clientX, e.clientY, [
+          { label: "Rename channel", fn: () => modalRenameChannel(c) },
+          { label: "Delete channel", danger: true, fn: async () => { await sb.from("channels").delete().eq("id", c.id); await loadEverything(); openServer(S.serverId); } }
+        ]);
+      };
+      body.appendChild(it);
+    });
+  } else {
+    $("side-title").textContent = "Direct Messages";
+    $("side-code").textContent = "";
+    const fr = el("div", "side-item" + (S.view === "friends" ? " active" : ""));
+    fr.appendChild(el("div", "ic", "&#128101;"));
+    fr.appendChild(el("div", "nm", "Friends"));
+    const rq = S.requests.filter((r) => r.receiver_id === S.me).length;
+    if (rq) fr.appendChild(el("div", "badge", String(rq)));
+    fr.onclick = () => openHome();
+    body.appendChild(fr);
+
+    const cat = el("div", "side-cat", "<span>Direct Messages</span>");
+    const plus = el("span", "plus", "+");
+    plus.onclick = modalCreateGroup;
+    cat.appendChild(plus);
+    body.appendChild(cat);
+
+    S.conversations.forEach((c) => {
+      const mem = (S.convMembers[c.id] || []).filter((m) => m.user_id !== S.me);
+      const other = mem.length ? mem[0].user_id : null;
+      if (c.kind === "dm" && other && isBlocked(other)) return;
+      const label = c.kind === "group" ? (c.name || "Group") : nameOf(other);
+      const it = el("div", "side-item" + (S.convId === c.id ? " active" : ""));
+      const av = el("div");
+      av.innerHTML = c.kind === "group"
+        ? '<div class="avatar sm">' + esc(initials(c.name || "G")) + "</div>"
+        : avatarHTML(S.profiles[other], "sm");
+      it.appendChild(av.firstChild);
+      it.appendChild(el("div", "nm", esc(label)));
+      const u = S.unread["c:" + c.id];
+      if (u) it.appendChild(el("div", "badge", String(u)));
+      it.onclick = () => openConversation(c.id);
+      it.oncontextmenu = (e) => {
+        e.preventDefault();
+        const items = [{ label: "Leave conversation", danger: true, fn: async () => { await sb.from("conversation_members").delete().eq("conversation_id", c.id).eq("user_id", S.me); await loadEverything(); openHome(); } }];
+        if (other) items.unshift({ label: isIgnored(other) ? "Unignore user" : "Ignore user", fn: () => toggleIgnore(other) });
+        if (other) items.unshift({ label: "Block user", danger: true, fn: () => blockUser(other) });
+        contextMenu(e.clientX, e.clientY, items);
+      };
+      body.appendChild(it);
+    });
+  }
+  $("me-avatar").innerHTML = (S.profile && S.profile.avatar_url ? '<img src="' + esc(S.profile.avatar_url) + '">' : esc(initials(S.profile ? S.profile.username : "?"))) + '<div class="dot on"></div>';
+  $("me-name").textContent = S.profile ? (S.profile.display_name || S.profile.username) : "";
+  $("me-id").textContent = S.profile ? "ID: " + S.profile.friend_id : "";
+}
+
+$("me-id").onclick = () => {
+  if (!S.profile) return;
+  navigator.clipboard.writeText(S.profile.friend_id);
+  toast("Friend ID copied", S.profile.friend_id);
+};
+$("btn-sound").onclick = () => {
+  S.soundOn = !S.soundOn;
+  $("btn-sound").innerHTML = S.soundOn ? "&#128266;" : "&#128263;";
+  $("btn-sound").classList.toggle("off", !S.soundOn);
+  if (S.soundOn) sndOutgoing();
+};
+$("btn-settings").onclick = modalSettings;
+$("btn-members").onclick = () => {
+  S.showMembers = !S.showMembers;
+  renderMembers();
+};
+
+function openHome() {
+  S.serverId = null; S.channelId = null; S.convId = null; S.view = "friends";
+  $("friends-view").classList.remove("hidden");
+  $("chat-view").classList.add("hidden");
+  $("members").classList.add("hidden");
+  $("top-title").innerHTML = "&#128101; Friends";
+  $("btn-voice").classList.add("hidden");
+  $("btn-video").classList.add("hidden");
+  $("btn-members").classList.add("hidden");
+  renderRail(); renderSidebar(); renderFriends();
+}
+
+function openServer(id) {
+  S.serverId = id; S.convId = null;
+  const chs = S.channels[id] || [];
+  const first = chs.find((c) => c.kind === "text");
+  renderRail();
+  if (first) openChannel(first.id);
+  else { S.channelId = null; renderSidebar(); $("friends-view").classList.remove("hidden"); $("chat-view").classList.add("hidden"); $("friends-view").innerHTML = '<div class="empty">No channels yet. Create one from the sidebar.</div>'; }
+}
+
+async function openChannel(id) {
+  S.channelId = id; S.convId = null; S.view = "chat";
+  delete S.unread["ch:" + id];
+  const ch = (S.channels[S.serverId] || []).find((c) => c.id === id);
+  $("friends-view").classList.add("hidden");
+  $("chat-view").classList.remove("hidden");
+  $("top-title").innerHTML = "# " + esc(ch ? ch.name : "");
+  $("btn-voice").classList.remove("hidden");
+  $("btn-video").classList.remove("hidden");
+  $("btn-members").classList.remove("hidden");
+  $("input").placeholder = "Message #" + (ch ? ch.name : "");
+  renderRail(); renderSidebar(); renderMembers();
+  await loadMessages();
+}
+
+async function openConversation(id) {
+  S.convId = id; S.channelId = null; S.serverId = null; S.view = "chat";
+  delete S.unread["c:" + id];
+  const c = S.conversations.find((x) => x.id === id);
+  const mem = (S.convMembers[id] || []).filter((m) => m.user_id !== S.me);
+  const label = c && c.kind === "group" ? (c.name || "Group") : nameOf(mem.length ? mem[0].user_id : null);
+  $("friends-view").classList.add("hidden");
+  $("chat-view").classList.remove("hidden");
+  $("top-title").innerHTML = "&#64; " + esc(label);
+  $("btn-voice").classList.remove("hidden");
+  $("btn-video").classList.remove("hidden");
+  $("btn-members").classList.remove("hidden");
+  $("input").placeholder = "Message " + label;
+  renderRail(); renderSidebar(); renderMembers();
+  await loadMessages();
+}
+
+function renderMembers() {
+  const box = $("members");
+  if (!S.showMembers || S.view !== "chat") { box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  box.innerHTML = "";
+  let ids = [];
+  if (S.channelId) ids = (S.serverMembers[S.serverId] || []).map((m) => m.user_id);
+  else if (S.convId) ids = (S.convMembers[S.convId] || []).map((m) => m.user_id);
+  box.appendChild(el("div", "side-cat", "<span>Members &mdash; " + ids.length + "</span>"));
+  ids.forEach((id) => {
+    const row = el("div", "mem");
+    const av = el("div");
+    av.innerHTML = avatarHTML(S.profiles[id], "sm");
+    row.appendChild(av.firstChild);
+    row.appendChild(el("div", "nm", esc(nameOf(id)) + (id === S.me ? " (you)" : "")));
+    row.onclick = () => showProfile(id);
+    row.oncontextmenu = (e) => { e.preventDefault(); memberMenu(e, id); };
+    box.appendChild(row);
+  });
+}
+
+function memberMenu(e, id) {
+  if (id === S.me) return;
+  contextMenu(e.clientX, e.clientY, [
+    { label: "View profile", fn: () => showProfile(id) },
+    { label: "Message", fn: () => startDM(id) },
+    { label: S.friends.indexOf(id) === -1 ? "Send friend request" : "Remove friend", fn: () => (S.friends.indexOf(id) === -1 ? sendRequestTo(id) : removeFriend(id)) },
+    { label: isIgnored(id) ? "Unignore" : "Ignore", fn: () => toggleIgnore(id) },
+    { label: isBlocked(id) ? "Unblock" : "Block", danger: true, fn: () => (isBlocked(id) ? unblockUser(id) : blockUser(id)) }
+  ]);
+}
+
+function renderEmojiText(text) {
+  let out = esc(text);
+  out = out.replace(/:([a-zA-Z0-9_~-]+):/g, (m, name) => {
+    const e = S.emojis.find((x) => x.name === name);
+    return e ? '<img class="ce" src="' + esc(e.url) + '" alt=":' + esc(name) + ':" title=":' + esc(name) + ':">' : m;
+  });
+  out = out.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" style="color:#00a8fc">$1</a>');
+  return out;
+}
+
+function isOnlyEmoji(text) {
+  if (!text) return false;
+  const stripped = text.replace(/:([a-zA-Z0-9_~-]+):/g, "").trim();
+  if (!stripped) return true;
+  return /^[\p{Extended_Pictographic}\u200d\ufe0f\s]+$/u.test(text) && text.trim().length <= 12;
+}
+
+function fmtTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const same = d.toDateString() === now.toDateString();
+  const t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return same ? "Today at " + t : d.toLocaleDateString() + " " + t;
+}
+
+function renderMessages() {
+  const box = $("msgs");
+  const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  box.innerHTML = "";
+  let prev = null;
+  const list = S.messages.filter((m) => !isBlocked(m.author_id) && !isIgnored(m.author_id));
+  if (!list.length) box.appendChild(el("div", "sys-msg", "No messages yet. Say hello!"));
+  list.forEach((m) => {
+    const grouped = prev && prev.author_id === m.author_id && new Date(m.created_at) - new Date(prev.created_at) < 420000;
+    box.appendChild(messageNode(m, grouped));
+    prev = m;
+  });
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+
+function messageNode(m, grouped) {
+  const node = el("div", "msg" + (grouped ? " grouped" : ""));
+  node.dataset.id = m.id;
+  const gutter = el("div", "gutter");
+  if (grouped) gutter.appendChild(el("div", "ts", new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })));
+  else {
+    const holder = el("div");
+    holder.innerHTML = avatarHTML(S.profiles[m.author_id]);
+    gutter.appendChild(holder.firstChild);
+  }
+  node.appendChild(gutter);
+
+  const body = el("div", "body");
+  if (!grouped) {
+    const hd = el("div", "hd");
+    const who = el("span", "who", esc(nameOf(m.author_id)));
+    who.onclick = () => showProfile(m.author_id);
+    who.oncontextmenu = (e) => { e.preventDefault(); memberMenu(e, m.author_id); };
+    hd.appendChild(who);
+    hd.appendChild(el("span", "when", fmtTime(m.created_at)));
+    body.appendChild(hd);
+  }
+  if (m.reply_to) {
+    const src = S.messages.find((x) => x.id === m.reply_to);
+    body.appendChild(el("div", "sys-msg", "&#8618; replying to " + esc(src ? nameOf(src.author_id) : "a message") + (src && src.content ? ": " + esc(src.content.slice(0, 60)) : "")));
+  }
+  if (m.content) {
+    const big = isOnlyEmoji(m.content);
+    const t = el("div", "txt" + (big ? " big-emoji" : ""), renderEmojiText(m.content));
+    if (big) t.querySelectorAll("img.ce").forEach((i) => { i.style.width = "44px"; i.style.height = "44px"; });
+    if (m.edited_at) t.appendChild(el("span", "edited", "(edited)"));
+    body.appendChild(t);
+  }
+  if (m.attachment_url) {
+    const att = el("div", "att");
+    const type = m.attachment_type || "";
+    if (type.indexOf("image") === 0) {
+      const i = el("img");
+      i.src = m.attachment_url;
+      i.onclick = () => lightbox(m.attachment_url);
+      att.appendChild(i);
+    } else if (type.indexOf("video") === 0) {
+      const v = el("video");
+      v.src = m.attachment_url; v.controls = true;
+      att.appendChild(v);
+    } else if (type.indexOf("audio") === 0) {
+      const a = el("audio");
+      a.src = m.attachment_url; a.controls = true;
+      att.appendChild(a);
+    } else {
+      att.appendChild(el("div", "file", '&#128206; <a href="' + esc(m.attachment_url) + '" target="_blank" rel="noopener">' + esc(m.attachment_name || "Attachment") + "</a>"));
+    }
+    body.appendChild(att);
+  }
+  const rl = (m.reactions || []);
+  if (rl.length) {
+    const wrap = el("div", "reacts");
+    const groups = {};
+    rl.forEach((r) => { (groups[r.emoji] = groups[r.emoji] || []).push(r.user_id); });
+    Object.keys(groups).forEach((emo) => {
+      const mine = groups[emo].indexOf(S.me) !== -1;
+      const b = el("button", "react" + (mine ? " mine" : ""));
+      const custom = S.emojis.find((x) => x.name === emo.replace(/:/g, ""));
+      b.innerHTML = (custom ? '<img src="' + esc(custom.url) + '">' : esc(emo)) + " <span>" + groups[emo].length + "</span>";
+      b.onclick = () => toggleReaction(m.id, emo, mine);
+      wrap.appendChild(b);
+    });
+    body.appendChild(wrap);
+  }
+  node.appendChild(body);
+
+  const tools = el("div", "msg-tools");
+  const rb = el("button", "", "&#128512;");
+  rb.title = "Add reaction";
+  rb.onclick = () => quickReact(m.id);
+  tools.appendChild(rb);
+  const rp = el("button", "", "&#8617;");
+  rp.title = "Reply";
+  rp.onclick = () => setReply(m);
+  tools.appendChild(rp);
+  if (m.author_id === S.me) {
+    const ed = el("button", "", "&#9998;");
+    ed.title = "Edit";
+    ed.onclick = () => editMessage(m);
+    tools.appendChild(ed);
+    const dl = el("button", "", "&#128465;");
+    dl.title = "Delete";
+    dl.onclick = async () => { await sb.from("messages").delete().eq("id", m.id); S.messages = S.messages.filter((x) => x.id !== m.id); renderMessages(); };
+    tools.appendChild(dl);
+  }
+  node.appendChild(tools);
+  return node;
+}
+
+function quickReact(mid) {
+  const quick = ["👍", "❤️", "😂", "🎉", "😮", "😢", "🔥", "👀"];
+  const back = openModal((box, close) => {
+    box.appendChild(el("h2", "", "React"));
+    const grid = el("div", "ep-grid");
+    quick.forEach((e) => {
+      const b = el("button", "", e);
+      b.onclick = () => { toggleReaction(mid, e, false); close(); };
+      grid.appendChild(b);
+    });
+    S.emojis.forEach((ce) => {
+      const b = el("button", "", '<img src="' + esc(ce.url) + '">');
+      b.onclick = () => { toggleReaction(mid, ":" + ce.name + ":", false); close(); };
+      grid.appendChild(b);
+    });
+    box.appendChild(grid);
+  });
+  return back;
+}
+
+async function toggleReaction(mid, emoji, mine) {
+  if (mine) await sb.from("reactions").delete().eq("message_id", mid).eq("user_id", S.me).eq("emoji", emoji);
+  else await sb.from("reactions").insert({ message_id: mid, user_id: S.me, emoji });
+  await refreshReactions();
+  renderMessages();
+}
+
+async function refreshReactions() {
+  const ids = S.messages.map((m) => m.id);
+  if (!ids.length) return;
+  const { data } = await sb.from("reactions").select("*").in("message_id", ids);
+  const by = {};
+  (data || []).forEach((r) => { (by[r.message_id] = by[r.message_id] || []).push(r); });
+  S.messages.forEach((m) => { m.reactions = by[m.id] || []; });
+}
+
+function editMessage(m) {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Edit message"));
+    const f = el("div", "field");
+    f.innerHTML = "<label>Message</label>";
+    const i = el("input");
+    i.value = m.content || "";
+    f.appendChild(i);
+    box.appendChild(f);
+    const acts = el("div", "acts");
+    const cancel = el("button", "btn sec", "Cancel");
+    cancel.onclick = close;
+    const save = el("button", "btn", "Save");
+    save.onclick = async () => {
+      await sb.from("messages").update({ content: i.value, edited_at: new Date().toISOString() }).eq("id", m.id);
+      m.content = i.value; m.edited_at = new Date().toISOString();
+      renderMessages(); close();
+    };
+    acts.appendChild(cancel); acts.appendChild(save);
+    box.appendChild(acts);
+  });
+}
+
+function setReply(m) {
+  S.replyTo = m;
+  $("reply-bar").classList.remove("hidden");
+  $("composer").classList.add("with-reply");
+  $("reply-text").textContent = "Replying to " + nameOf(m.author_id);
+  $("input").focus();
+}
+$("reply-cancel").onclick = () => {
+  S.replyTo = null;
+  $("reply-bar").classList.add("hidden");
+  $("composer").classList.remove("with-reply");
+};
+
+async function loadMessages() {
+  let q = sb.from("messages").select("*").order("created_at", { ascending: false }).limit(100);
+  if (S.channelId) q = q.eq("channel_id", S.channelId);
+  else if (S.convId) q = q.eq("conversation_id", S.convId);
+  else return;
+  const { data } = await q;
+  S.messages = (data || []).reverse();
+  await cacheProfiles(S.messages.map((m) => m.author_id));
+  await refreshReactions();
+  renderMessages();
+  $("msgs").scrollTop = $("msgs").scrollHeight;
+}
+
+const input = $("input");
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = Math.min(input.scrollHeight, 180) + "px";
+  broadcastTyping();
+});
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+$("btn-send").onclick = sendMessage;
+
+async function sendMessage(attachment) {
+  const text = input.value.trim();
+  if (!text && !attachment) return;
+  const row = {
+    author_id: S.me,
+    content: text || null,
+    reply_to: S.replyTo ? S.replyTo.id : null
+  };
+  if (S.channelId) row.channel_id = S.channelId;
+  else if (S.convId) row.conversation_id = S.convId;
+  else return;
+  if (attachment) {
+    row.attachment_url = attachment.url;
+    row.attachment_name = attachment.name;
+    row.attachment_type = attachment.type;
+  }
+  input.value = "";
+  input.style.height = "auto";
+  $("reply-cancel").click();
+  const { error } = await sb.from("messages").insert(row);
+  if (error) toast("Could not send", error.message);
+  else sndOutgoing();
+}
+
+$("btn-attach").onclick = () => $("file-input").click();
+$("file-input").onchange = async () => {
+  const f = $("file-input").files[0];
+  if (!f) return;
+  if (f.size > 40 * 1024 * 1024) return toast("Too large", "Maximum upload size is 40 MB");
+  toast("Uploading", f.name);
+  const path = S.me + "/" + Date.now() + "-" + f.name.replace(/[^\w.\-]/g, "_");
+  const { error } = await sb.storage.from("uploads").upload(path, f, { upsert: false, contentType: f.type });
+  $("file-input").value = "";
+  if (error) return toast("Upload failed", error.message);
+  const { data } = sb.storage.from("uploads").getPublicUrl(path);
+  await sendMessage({ url: data.publicUrl, name: f.name, type: f.type });
+};
+
+document.addEventListener("paste", async (e) => {
+  if (S.view !== "chat") return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].kind === "file") {
+      const f = items[i].getAsFile();
+      const path = S.me + "/" + Date.now() + "-paste-" + (f.name || "image.png").replace(/[^\w.\-]/g, "_");
+      toast("Uploading", "Pasted file");
+      const { error } = await sb.storage.from("uploads").upload(path, f, { contentType: f.type });
+      if (error) return toast("Upload failed", error.message);
+      const { data } = sb.storage.from("uploads").getPublicUrl(path);
+      await sendMessage({ url: data.publicUrl, name: f.name || "image.png", type: f.type });
+    }
+  }
+});
+
+$("btn-emoji").onclick = () => {
+  const pop = $("emoji-pop");
+  pop.classList.toggle("hidden");
+  if (!pop.classList.contains("hidden")) { renderEmojiPicker(); $("ep-search").focus(); }
+};
+document.addEventListener("click", (e) => {
+  const pop = $("emoji-pop");
+  if (pop.classList.contains("hidden")) return;
+  if (pop.contains(e.target) || e.target === $("btn-emoji")) return;
+  pop.classList.add("hidden");
+});
+$("ep-search").addEventListener("input", renderEmojiPicker);
+document.querySelectorAll("#emoji-pop .ep-tabs button").forEach((b) => {
+  b.onclick = () => {
+    S.epTab = b.dataset.tab;
+    document.querySelectorAll("#emoji-pop .ep-tabs button").forEach((x) => x.classList.toggle("active", x === b));
+    renderEmojiPicker();
+  };
+});
+$("ep-manage").onclick = () => modalEmojis(S.serverId);
+
+function insertAtCursor(text) {
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  input.value = input.value.slice(0, start) + text + input.value.slice(end);
+  input.selectionStart = input.selectionEnd = start + text.length;
+  input.focus();
+}
+
+function renderEmojiPicker() {
+  const body = $("ep-body");
+  const term = $("ep-search").value.trim().toLowerCase();
+  body.innerHTML = "";
+  if (S.epTab === "custom") {
+    const list = S.emojis.filter((e) => !term || e.name.toLowerCase().indexOf(term) !== -1);
+    if (!list.length) { body.appendChild(el("div", "empty", "No custom emojis yet.")); return; }
+    const grid = el("div", "ep-grid");
+    list.forEach((e) => {
+      const b = el("button", "", '<img src="' + esc(e.url) + '" title=":' + esc(e.name) + ':">');
+      b.onclick = () => insertAtCursor(":" + e.name + ": ");
+      grid.appendChild(b);
+    });
+    body.appendChild(el("div", "ep-cat", "Custom"));
+    body.appendChild(grid);
+    return;
+  }
+  EMOJI_SETS.forEach((set) => {
+    const list = term ? set[1].filter((e) => set[0].toLowerCase().indexOf(term) !== -1) : set[1];
+    if (!list.length) return;
+    body.appendChild(el("div", "ep-cat", set[0]));
+    const grid = el("div", "ep-grid");
+    list.forEach((e) => {
+      const b = el("button", "", e);
+      b.onclick = () => insertAtCursor(e);
+      grid.appendChild(b);
+    });
+    body.appendChild(grid);
+  });
+}
+
+function renderFriends() {
+  const v = $("friends-view");
+  v.innerHTML = "";
+  const tabs = el("div", "fr-tabs");
+  [["all", "All"], ["online", "Online"], ["pending", "Pending"], ["blocked", "Blocked"], ["ignored", "Ignored"]].forEach(([k, label]) => {
+    const b = el("button", S.frTab === k ? "active" : "", label + (k === "pending" && S.requests.length ? " (" + S.requests.length + ")" : ""));
+    b.onclick = () => { S.frTab = k; renderFriends(); };
+    tabs.appendChild(b);
+  });
+  const add = el("button", "addbtn", "Add Friend");
+  add.onclick = () => { S.frTab = "add"; renderFriends(); };
+  tabs.appendChild(add);
+  v.appendChild(tabs);
+
+  if (S.frTab === "add") {
+    const box = el("div", "fr-add");
+    box.appendChild(el("h3", "", "Add a friend"));
+    box.appendChild(el("p", "", "You can add friends with their Friend ID. Yours is " + esc(S.profile ? S.profile.friend_id : "") + " — click it in the bottom left to copy."));
+    const row = el("div", "row");
+    const i = el("input");
+    i.placeholder = "Enter a Friend ID";
+    const b = el("button", "btn", "Send Request");
+    b.onclick = async () => {
+      const code = i.value.trim();
+      if (!code) return;
+      const { data, error } = await sb.rpc("send_friend_request", { p_friend_id: code });
+      if (error) return toast("Failed", error.message);
+      toast("Friend request", data);
+      i.value = "";
+      await loadEverything();
+      renderRail(); renderSidebar(); renderFriends();
+    };
+    i.addEventListener("keydown", (e) => { if (e.key === "Enter") b.click(); });
+    row.appendChild(i); row.appendChild(b);
+    box.appendChild(row);
+    v.appendChild(box);
+    return;
+  }
+
+  if (S.frTab === "pending") {
+    const incoming = S.requests.filter((r) => r.receiver_id === S.me);
+    const outgoing = S.requests.filter((r) => r.sender_id === S.me);
+    v.appendChild(el("div", "fr-head", "Incoming — " + incoming.length));
+    if (!incoming.length) v.appendChild(el("div", "empty", "No incoming requests."));
+    incoming.forEach((r) => v.appendChild(requestRow(r, true)));
+    v.appendChild(el("div", "fr-head", "Outgoing — " + outgoing.length));
+    if (!outgoing.length) v.appendChild(el("div", "empty", "No outgoing requests."));
+    outgoing.forEach((r) => v.appendChild(requestRow(r, false)));
+    return;
+  }
+
+  if (S.frTab === "blocked" || S.frTab === "ignored") {
+    const ids = S.frTab === "blocked" ? S.blocks : S.ignores;
+    v.appendChild(el("div", "fr-head", (S.frTab === "blocked" ? "Blocked" : "Ignored") + " — " + ids.length));
+    if (!ids.length) v.appendChild(el("div", "empty", "Nobody here."));
+    ids.forEach((id) => {
+      const row = el("div", "fr-row");
+      const av = el("div");
+      av.innerHTML = avatarHTML(S.profiles[id]);
+      row.appendChild(av.firstChild);
+      const meta = el("div", "meta");
+      meta.appendChild(el("div", "nm", esc(nameOf(id))));
+      meta.appendChild(el("div", "sub", esc(S.profiles[id] ? S.profiles[id].friend_id : "")));
+      row.appendChild(meta);
+      const acts = el("div", "acts");
+      const un = el("button", "", "&#10005;");
+      un.title = S.frTab === "blocked" ? "Unblock" : "Unignore";
+      un.onclick = () => (S.frTab === "blocked" ? unblockUser(id) : toggleIgnore(id));
+      acts.appendChild(un);
+      row.appendChild(acts);
+      v.appendChild(row);
+    });
+    return;
+  }
+
+  let list = S.friends.filter((id) => !isBlocked(id));
+  if (S.frTab === "online") list = list.filter((id) => S.online[id]);
+  v.appendChild(el("div", "fr-head", (S.frTab === "online" ? "Online" : "All friends") + " — " + list.length));
+  if (!list.length) v.appendChild(el("div", "empty", "No friends here yet. Add someone with their Friend ID."));
+  list.forEach((id) => {
+    const row = el("div", "fr-row");
+    const av = el("div");
+    av.innerHTML = avatarHTML(S.profiles[id]);
+    row.appendChild(av.firstChild);
+    const meta = el("div", "meta");
+    meta.appendChild(el("div", "nm", esc(nameOf(id))));
+    meta.appendChild(el("div", "sub", (S.online[id] ? "Online" : "Offline") + " · " + esc(S.profiles[id] ? S.profiles[id].friend_id : "")));
+    row.appendChild(meta);
+    const acts = el("div", "acts");
+    const msg = el("button", "", "&#128172;");
+    msg.title = "Message"; msg.onclick = () => startDM(id);
+    const call = el("button", "", "&#9742;");
+    call.title = "Call"; call.onclick = async () => { const cid = await startDM(id); startCall(false); };
+    const more = el("button", "", "&#8942;");
+    more.title = "More"; more.onclick = (e) => memberMenu(e, id);
+    acts.appendChild(msg); acts.appendChild(call); acts.appendChild(more);
+    row.appendChild(acts);
+    row.oncontextmenu = (e) => { e.preventDefault(); memberMenu(e, id); };
+    v.appendChild(row);
+  });
+}
+
+function requestRow(r, incoming) {
+  const other = incoming ? r.sender_id : r.receiver_id;
+  const row = el("div", "fr-row");
+  const av = el("div");
+  av.innerHTML = avatarHTML(S.profiles[other]);
+  row.appendChild(av.firstChild);
+  const meta = el("div", "meta");
+  meta.appendChild(el("div", "nm", esc(nameOf(other))));
+  meta.appendChild(el("div", "sub", incoming ? "Incoming friend request" : "Outgoing friend request"));
+  row.appendChild(meta);
+  const acts = el("div", "acts");
+  if (incoming) {
+    const ok = el("button", "", "&#10003;");
+    ok.title = "Accept";
+    ok.onclick = async () => {
+      const { error } = await sb.rpc("accept_friend_request", { p_request: r.id });
+      if (error) return toast("Failed", error.message);
+      sndJoin();
+      await loadEverything(); renderRail(); renderSidebar(); renderFriends();
+    };
+    acts.appendChild(ok);
+  }
+  const no = el("button", "", "&#10005;");
+  no.title = incoming ? "Decline" : "Cancel";
+  no.onclick = async () => {
+    await sb.from("friend_requests").delete().eq("id", r.id);
+    await loadEverything(); renderRail(); renderSidebar(); renderFriends();
+  };
+  acts.appendChild(no);
+  row.appendChild(acts);
+  return row;
+}
+
+async function sendRequestTo(id) {
+  const p = S.profiles[id];
+  if (!p) return;
+  const { data, error } = await sb.rpc("send_friend_request", { p_friend_id: p.friend_id });
+  if (error) return toast("Failed", error.message);
+  toast("Friend request", data);
+  await loadEverything(); renderRail(); renderSidebar();
+}
+
+async function removeFriend(id) {
+  await sb.rpc("remove_friend", { p_other: id });
+  await loadEverything(); renderRail(); renderSidebar(); if (S.view === "friends") renderFriends();
+  toast("Removed", nameOf(id) + " is no longer a friend");
+}
+
+async function blockUser(id) {
+  await sb.from("blocks").insert({ blocker_id: S.me, blocked_id: id });
+  await sb.rpc("remove_friend", { p_other: id });
+  await loadEverything();
+  renderRail(); renderSidebar(); renderMessages();
+  if (S.view === "friends") renderFriends();
+  toast("Blocked", nameOf(id) + " has been blocked");
+}
+async function unblockUser(id) {
+  await sb.from("blocks").delete().eq("blocker_id", S.me).eq("blocked_id", id);
+  await loadEverything();
+  renderRail(); renderSidebar(); renderMessages();
+  if (S.view === "friends") renderFriends();
+}
+async function toggleIgnore(id) {
+  if (isIgnored(id)) await sb.from("ignores").delete().eq("user_id", S.me).eq("target_id", id);
+  else await sb.from("ignores").insert({ user_id: S.me, target_id: id });
+  await loadEverything();
+  renderMessages();
+  if (S.view === "friends") renderFriends();
+  toast(isIgnored(id) ? "Ignoring" : "No longer ignoring", nameOf(id));
+}
+
+async function startDM(id) {
+  const { data, error } = await sb.rpc("get_or_create_dm", { p_other: id });
+  if (error) { toast("Failed", error.message); return null; }
+  await loadEverything();
+  openConversation(data);
+  return data;
+}
+
+function showProfile(id) {
+  const p = S.profiles[id];
+  openModal((box, close) => {
+    const head = el("div");
+    head.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:10px";
+    const av = el("div");
+    av.innerHTML = avatarHTML(p, "lg");
+    head.appendChild(av.firstChild);
+    head.appendChild(el("h2", "", esc(p ? (p.display_name || p.username) : "Unknown")));
+    head.appendChild(el("p", "md", "Friend ID: " + esc(p ? p.friend_id : "")));
+    if (p && p.about) head.appendChild(el("p", "md", esc(p.about)));
+    box.appendChild(head);
+    if (id !== S.me) {
+      const acts = el("div", "acts");
+      const m = el("button", "btn", "Message");
+      m.onclick = () => { close(); startDM(id); };
+      acts.appendChild(m);
+      if (S.friends.indexOf(id) === -1) {
+        const f = el("button", "btn sec", "Add Friend");
+        f.onclick = () => { close(); sendRequestTo(id); };
+        acts.appendChild(f);
+      }
+      const b = el("button", "btn danger", isBlocked(id) ? "Unblock" : "Block");
+      b.onclick = () => { close(); isBlocked(id) ? unblockUser(id) : blockUser(id); };
+      acts.appendChild(b);
+      box.appendChild(acts);
+    }
+  });
+}
+
+function modalServer() {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Servers"));
+    box.appendChild(el("p", "md", "Create your own or join one with an invite code."));
+    const f1 = el("div", "field");
+    f1.innerHTML = "<label>Server name</label>";
+    const i1 = el("input");
+    f1.appendChild(i1);
+    box.appendChild(f1);
+    const b1 = el("button", "btn", "Create Server");
+    b1.onclick = async () => {
+      if (!i1.value.trim()) return;
+      const { error } = await sb.rpc("create_server", { p_name: i1.value.trim() });
+      if (error) return toast("Failed", error.message);
+      await loadEverything(); renderRail(); renderSidebar(); close(); sndJoin();
+    };
+    box.appendChild(b1);
+    const f2 = el("div", "field");
+    f2.style.marginTop = "22px";
+    f2.innerHTML = "<label>Invite code</label>";
+    const i2 = el("input");
+    f2.appendChild(i2);
+    box.appendChild(f2);
+    const b2 = el("button", "btn sec", "Join Server");
+    b2.onclick = async () => {
+      if (!i2.value.trim()) return;
+      const { data, error } = await sb.rpc("join_server", { p_code: i2.value.trim() });
+      if (error) return toast("Failed", error.message);
+      await loadEverything(); renderRail(); openServer(data); close(); sndJoin();
+    };
+    box.appendChild(b2);
+  });
+}
+
+function modalCreateChannel(sid) {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Create channel"));
+    const f = el("div", "field");
+    f.innerHTML = "<label>Channel name</label>";
+    const i = el("input");
+    f.appendChild(i);
+    box.appendChild(f);
+    const f2 = el("div", "field");
+    f2.innerHTML = "<label>Type</label>";
+    const sel = el("select");
+    sel.style.cssText = "width:100%;background:var(--bg-float);color:var(--txt-bright);padding:10px;border-radius:4px";
+    sel.innerHTML = '<option value="text">Text</option><option value="voice">Voice</option>';
+    f2.appendChild(sel);
+    box.appendChild(f2);
+    const acts = el("div", "acts");
+    const c = el("button", "btn sec", "Cancel");
+    c.onclick = close;
+    const ok = el("button", "btn", "Create");
+    ok.onclick = async () => {
+      const name = i.value.trim().toLowerCase().replace(/\s+/g, "-");
+      if (!name) return;
+      const { error } = await sb.from("channels").insert({ server_id: sid, name, kind: sel.value, position: (S.channels[sid] || []).length });
+      if (error) return toast("Failed", error.message);
+      await loadEverything(); renderSidebar(); close();
+    };
+    acts.appendChild(c); acts.appendChild(ok);
+    box.appendChild(acts);
+  });
+}
+
+function modalRenameChannel(ch) {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Rename channel"));
+    const f = el("div", "field");
+    f.innerHTML = "<label>Name</label>";
+    const i = el("input");
+    i.value = ch.name;
+    f.appendChild(i);
+    box.appendChild(f);
+    const acts = el("div", "acts");
+    const c = el("button", "btn sec", "Cancel");
+    c.onclick = close;
+    const ok = el("button", "btn", "Save");
+    ok.onclick = async () => {
+      await sb.from("channels").update({ name: i.value.trim().toLowerCase().replace(/\s+/g, "-") }).eq("id", ch.id);
+      await loadEverything(); renderSidebar(); close();
+    };
+    acts.appendChild(c); acts.appendChild(ok);
+    box.appendChild(acts);
+  });
+}
+
+function modalCreateGroup() {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Create a group"));
+    box.appendChild(el("p", "md", "Pick friends to add."));
+    const f = el("div", "field");
+    f.innerHTML = "<label>Group name</label>";
+    const i = el("input");
+    f.appendChild(i);
+    box.appendChild(f);
+    const chosen = {};
+    const list = el("div", "pick-list");
+    S.friends.filter((id) => !isBlocked(id)).forEach((id) => {
+      const row = el("div", "pick");
+      const av = el("div");
+      av.innerHTML = avatarHTML(S.profiles[id], "sm");
+      row.appendChild(av.firstChild);
+      row.appendChild(el("div", "nm", esc(nameOf(id))));
+      row.onclick = () => { chosen[id] = !chosen[id]; row.classList.toggle("sel", !!chosen[id]); };
+      list.appendChild(row);
+    });
+    if (!S.friends.length) list.appendChild(el("div", "empty", "Add friends first."));
+    box.appendChild(list);
+    const acts = el("div", "acts");
+    const c = el("button", "btn sec", "Cancel");
+    c.onclick = close;
+    const ok = el("button", "btn", "Create");
+    ok.onclick = async () => {
+      const members = Object.keys(chosen).filter((k) => chosen[k]);
+      if (!members.length) return toast("Pick someone", "A group needs at least one other person");
+      const { data, error } = await sb.rpc("create_group", { p_name: i.value.trim() || "New Group", p_members: members });
+      if (error) return toast("Failed", error.message);
+      await loadEverything(); openConversation(data); close();
+    };
+    acts.appendChild(c); acts.appendChild(ok);
+    box.appendChild(acts);
+  });
+}
+
+function modalEmojis(sid) {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Custom emojis"));
+    box.appendChild(el("p", "md", sid ? "Emojis uploaded here belong to this server." : "Emojis uploaded here are available to you everywhere."));
+    const f = el("div", "field");
+    f.innerHTML = "<label>Emoji name (letters, numbers, underscores)</label>";
+    const nameIn = el("input");
+    nameIn.placeholder = "party_blob";
+    f.appendChild(nameIn);
+    box.appendChild(f);
+    const fileIn = el("input");
+    fileIn.type = "file";
+    fileIn.accept = "image/*";
+    fileIn.style.cssText = "width:100%;color:var(--txt-dim);font-size:13px;margin-bottom:12px";
+    box.appendChild(fileIn);
+    const up = el("button", "btn", "Upload emoji");
+    up.onclick = async () => {
+      const name = nameIn.value.trim().toLowerCase().replace(/[^a-z0-9_~-]/g, "");
+      const file = fileIn.files[0];
+      if (!name || !file) return toast("Missing", "Give it a name and pick an image");
+      const path = S.me + "/emoji-" + Date.now() + "-" + name + "." + (file.name.split(".").pop() || "png");
+      const { error } = await sb.storage.from("emojis").upload(path, file, { contentType: file.type });
+      if (error) return toast("Upload failed", error.message);
+      const { data } = sb.storage.from("emojis").getPublicUrl(path);
+      const { error: e2 } = await sb.from("emojis").insert({ name, url: data.publicUrl, server_id: sid || null, creator_id: S.me });
+      if (e2) return toast("Failed", e2.message);
+      nameIn.value = ""; fileIn.value = "";
+      await loadEmojis();
+      close(); modalEmojis(sid);
+      toast("Emoji added", ":" + name + ":");
+    };
+    box.appendChild(up);
+    const grid = el("div", "emoji-manage");
+    S.emojis.filter((e) => (sid ? e.server_id === sid : true)).forEach((e) => {
+      const card = el("div", "em");
+      card.innerHTML = '<img src="' + esc(e.url) + '"><span>:' + esc(e.name) + ':</span>';
+      if (e.creator_id === S.me) {
+        const del = el("button", "", "delete");
+        del.onclick = async () => { await sb.from("emojis").delete().eq("id", e.id); await loadEmojis(); close(); modalEmojis(sid); };
+        card.appendChild(del);
+      }
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+    const acts = el("div", "acts");
+    const c = el("button", "btn sec", "Close");
+    c.onclick = close;
+    acts.appendChild(c);
+    box.appendChild(acts);
+  });
+}
+
+function modalSettings() {
+  openModal((box, close) => {
+    box.appendChild(el("h2", "", "Settings"));
+    const f1 = el("div", "field");
+    f1.innerHTML = "<label>Display name</label>";
+    const i1 = el("input");
+    i1.value = S.profile.display_name || S.profile.username;
+    f1.appendChild(i1);
+    box.appendChild(f1);
+    const f2 = el("div", "field");
+    f2.innerHTML = "<label>About me</label>";
+    const i2 = el("input");
+    i2.value = S.profile.about || "";
+    f2.appendChild(i2);
+    box.appendChild(f2);
+    const f3 = el("div", "field");
+    f3.innerHTML = "<label>Avatar</label>";
+    const i3 = el("input");
+    i3.type = "file"; i3.accept = "image/*";
+    i3.style.cssText = "background:transparent;color:var(--txt-dim);font-size:13px;padding:0";
+    f3.appendChild(i3);
+    box.appendChild(f3);
+    const f4 = el("div", "field");
+    f4.innerHTML = "<label>Your Friend ID</label>";
+    const i4 = el("input");
+    i4.value = S.profile.friend_id;
+    i4.readOnly = true;
+    f4.appendChild(i4);
+    box.appendChild(f4);
+    const notif = el("button", "btn sec", "Enable desktop notifications");
+    notif.onclick = async () => {
+      if (!("Notification" in window)) return toast("Unsupported", "This browser has no notification support");
+      const p = await Notification.requestPermission();
+      toast("Notifications", p);
+    };
+    box.appendChild(notif);
+    const em = el("button", "btn sec", "Manage my custom emojis");
+    em.style.marginTop = "10px";
+    em.onclick = () => { close(); modalEmojis(null); };
+    box.appendChild(em);
+    const acts = el("div", "acts");
+    const out = el("button", "btn danger", "Log Out");
+    out.onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    const save = el("button", "btn", "Save");
+    save.onclick = async () => {
+      const patch = { display_name: i1.value.trim(), about: i2.value.trim() };
+      if (i3.files[0]) {
+        const file = i3.files[0];
+        const path = S.me + "/avatar-" + Date.now() + "." + (file.name.split(".").pop() || "png");
+        const { error } = await sb.storage.from("avatars").upload(path, file, { contentType: file.type });
+        if (!error) patch.avatar_url = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      }
+      await sb.from("profiles").update(patch).eq("id", S.me);
+      await loadEverything();
+      renderRail(); renderSidebar(); renderMessages();
+      close();
+    };
+    acts.appendChild(out); acts.appendChild(save);
+    box.appendChild(acts);
+  });
+}
+
+let typingChannel = null;
+let typingUsers = {};
+let lastTypingSent = 0;
+function broadcastTyping() {
+  if (!typingChannel) return;
+  const now = Date.now();
+  if (now - lastTypingSent < 2500) return;
+  lastTypingSent = now;
+  typingChannel.send({ type: "broadcast", event: "typing", payload: { id: S.me, name: nameOf(S.me) } });
+}
+function renderTyping() {
+  const now = Date.now();
+  const names = Object.keys(typingUsers).filter((k) => now - typingUsers[k].t < 5000 && k !== S.me).map((k) => typingUsers[k].name);
+  $("typing").textContent = names.length ? names.join(", ") + (names.length > 1 ? " are typing..." : " is typing...") : "";
+}
+setInterval(renderTyping, 1500);
+
+let presenceChannel = null;
+let dbChannel = null;
+
+function roomKey() {
+  if (S.channelId) return "ch:" + S.channelId;
+  if (S.convId) return "c:" + S.convId;
+  return null;
+}
+
+function subscribeRoom() {
+  if (typingChannel) { sb.removeChannel(typingChannel); typingChannel = null; }
+  const key = roomKey();
+  if (!key) return;
+  typingUsers = {};
+  typingChannel = sb.channel("room:" + key);
+  typingChannel.on("broadcast", { event: "typing" }, ({ payload }) => {
+    if (payload.id === S.me) return;
+    typingUsers[payload.id] = { name: payload.name, t: Date.now() };
+    renderTyping();
+  });
+  typingChannel.subscribe();
+}
+
+function subscribeDB() {
+  if (dbChannel) sb.removeChannel(dbChannel);
+  dbChannel = sb.channel("db-events");
+  dbChannel.on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, async ({ new: m }) => {
+    await cacheProfiles([m.author_id]);
+    if (isBlocked(m.author_id) || isIgnored(m.author_id)) return;
+    const inRoom = (S.channelId && m.channel_id === S.channelId) || (S.convId && m.conversation_id === S.convId);
+    if (inRoom) {
+      if (S.messages.find((x) => x.id === m.id)) return;
+      m.reactions = [];
+      S.messages.push(m);
+      renderMessages();
+      if (m.author_id !== S.me) sndIncoming();
+    } else if (m.author_id !== S.me) {
+      const key = m.channel_id ? "ch:" + m.channel_id : "c:" + m.conversation_id;
+      S.unread[key] = (S.unread[key] || 0) + 1;
+      renderRail(); renderSidebar();
+      sndIncoming();
+      toast(nameOf(m.author_id), m.content || "Sent an attachment", () => {
+        if (m.channel_id) {
+          const srv = Object.keys(S.channels).find((sid) => (S.channels[sid] || []).some((c) => c.id === m.channel_id));
+          if (srv) { S.serverId = srv; openChannel(m.channel_id); }
+        } else openConversation(m.conversation_id);
+      });
+    }
+  });
+  dbChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, ({ new: m }) => {
+    const i = S.messages.findIndex((x) => x.id === m.id);
+    if (i !== -1) { m.reactions = S.messages[i].reactions; S.messages[i] = m; renderMessages(); }
+  });
+  dbChannel.on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, ({ old: m }) => {
+    const i = S.messages.findIndex((x) => x.id === m.id);
+    if (i !== -1) { S.messages.splice(i, 1); renderMessages(); }
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "reactions" }, async () => {
+    await refreshReactions(); renderMessages();
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "friend_requests" }, async ({ new: r, eventType }) => {
+    await loadEverything();
+    renderRail(); renderSidebar();
+    if (S.view === "friends") renderFriends();
+    if (eventType === "INSERT" && r && r.receiver_id === S.me) {
+      sndAlert();
+      toast("Friend request", nameOf(r.sender_id) + " wants to be friends", () => { S.frTab = "pending"; openHome(); });
+    }
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, async () => {
+    await loadEverything(); renderRail(); renderSidebar();
+    if (S.view === "friends") renderFriends();
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "channels" }, async () => {
+    await loadEverything(); renderSidebar();
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "conversation_members" }, async () => {
+    await loadEverything(); renderSidebar(); renderMembers();
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "server_members" }, async () => {
+    await loadEverything(); renderRail(); renderSidebar(); renderMembers();
+  });
+  dbChannel.on("postgres_changes", { event: "*", schema: "public", table: "emojis" }, async () => {
+    await loadEmojis(); renderMessages();
+  });
+  dbChannel.on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, ({ new: p }) => {
+    S.profiles[p.id] = p;
+    if (p.id === S.me) S.profile = p;
+    renderMessages(); renderSidebar(); renderMembers();
+  });
+  dbChannel.subscribe();
+}
+
+function subscribePresence() {
+  if (presenceChannel) sb.removeChannel(presenceChannel);
+  presenceChannel = sb.channel("presence:global", { config: { presence: { key: S.me } } });
+  presenceChannel.on("presence", { event: "sync" }, () => {
+    const st = presenceChannel.presenceState();
+    S.online = {};
+    Object.keys(st).forEach((k) => { S.online[k] = true; });
+    renderSidebar(); renderMembers(); renderMessages();
+    if (S.view === "friends") renderFriends();
+  });
+  presenceChannel.on("broadcast", { event: "call-invite" }, ({ payload }) => {
+    if (payload.from === S.me) return;
+    if (payload.targets && payload.targets.indexOf(S.me) === -1) return;
+    if (isBlocked(payload.from) || isIgnored(payload.from)) return;
+    if (call.active && call.room === payload.room) return;
+    showRing(payload);
+  });
+  presenceChannel.subscribe(async (status) => {
+    if (status === "SUBSCRIBED") await presenceChannel.track({ id: S.me, at: Date.now() });
+  });
+}
+
+let pendingRing = null;
+function showRing(payload) {
+  pendingRing = payload;
+  $("ring-title").textContent = (payload.video ? "Video call" : "Voice call");
+  $("ring-sub").textContent = nameOf(payload.from) + " is calling in " + payload.label;
+  $("ring").classList.remove("hidden");
+  startRingTone();
+  setTimeout(() => { if (pendingRing === payload) dismissRing(); }, 35000);
+}
+function dismissRing() {
+  pendingRing = null;
+  $("ring").classList.add("hidden");
+  stopRingTone();
+}
+$("ring-dec").onclick = dismissRing;
+$("ring-acc").onclick = async () => {
+  const p = pendingRing;
+  dismissRing();
+  if (!p) return;
+  if (p.conversation_id) { await openConversation(p.conversation_id); }
+  else if (p.channel_id) {
+    const srv = Object.keys(S.channels).find((sid) => (S.channels[sid] || []).some((c) => c.id === p.channel_id));
+    if (srv) { S.serverId = srv; await openChannel(p.channel_id); }
+  }
+  startCall(p.video, p.room, p.label);
+};
+
+const ICE = { iceServers: [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "stun:stun2.l.google.com:19302" },
+  { urls: "stun:global.stun.twilio.com:3478" }
+] };
+
+const call = {
+  active: false,
+  room: null,
+  label: "",
+  channel: null,
+  local: null,
+  screen: null,
+  peers: {},
+  video: false,
+  muted: false,
+  camOff: true
+};
+
+$("btn-voice").onclick = () => startCall(false);
+$("btn-video").onclick = () => startCall(true);
+$("cb-hang").onclick = endCall;
+$("cb-mic").onclick = () => {
+  if (!call.local) return;
+  call.muted = !call.muted;
+  call.local.getAudioTracks().forEach((t) => (t.enabled = !call.muted));
+  $("cb-mic").classList.toggle("off", call.muted);
+  $("cb-mic").innerHTML = call.muted ? "&#128263;" : "&#127908;";
+};
+$("cb-cam").onclick = toggleCam;
+$("cb-screen").onclick = toggleScreen;
+
+function joinVoiceChannel(c) {
+  S.channelId = c.id;
+  startCall(false, "voice:" + c.id, "#" + c.name);
+}
+
+async function startCall(video, roomOverride, labelOverride) {
+  if (call.active) return;
+  const room = roomOverride || (S.channelId ? "call:ch:" + S.channelId : S.convId ? "call:c:" + S.convId : null);
+  if (!room) return toast("Nowhere to call", "Open a channel or conversation first");
+  let label = labelOverride;
+  if (!label) {
+    if (S.channelId) {
+      const ch = (S.channels[S.serverId] || []).find((c) => c.id === S.channelId);
+      label = "#" + (ch ? ch.name : "channel");
+    } else {
+      const c = S.conversations.find((x) => x.id === S.convId);
+      const mem = (S.convMembers[S.convId] || []).filter((m) => m.user_id !== S.me);
+      label = c && c.kind === "group" ? (c.name || "Group") : nameOf(mem.length ? mem[0].user_id : null);
+    }
+  }
+  try {
+    call.local = await navigator.mediaDevices.getUserMedia({ audio: true, video: !!video });
+  } catch (e) {
+    try {
+      call.local = await navigator.mediaDevices.getUserMedia({ audio: true });
+      video = false;
+      toast("No camera", "Joining with audio only");
+    } catch (e2) {
+      return toast("Call failed", "Microphone access is required");
+    }
+  }
+  call.active = true;
+  call.room = room;
+  call.label = label;
+  call.video = !!video;
+  call.camOff = !video;
+  call.muted = false;
+  $("cb-cam").classList.toggle("off", call.camOff);
+  $("cb-mic").classList.remove("off");
+  $("cb-mic").innerHTML = "&#127908;";
+  $("call-layer").classList.remove("hidden");
+  $("call-title").textContent = (video ? "Video call" : "Voice call") + " — " + label;
+  renderTiles();
+  sndJoin();
+
+  const targets = S.convId ? (S.convMembers[S.convId] || []).map((m) => m.user_id).filter((i) => i !== S.me) : null;
+  if (presenceChannel) {
+    presenceChannel.send({
+      type: "broadcast",
+      event: "call-invite",
+      payload: {
+        from: S.me, room, label, video: !!video,
+        conversation_id: S.convId, channel_id: S.channelId,
+        targets
+      }
+    });
+  }
+
+  call.channel = sb.channel(room, { config: { presence: { key: S.me }, broadcast: { self: false } } });
+  call.channel.on("presence", { event: "sync" }, () => {
+    const st = call.channel.presenceState();
+    const ids = Object.keys(st).filter((k) => k !== S.me);
+    ids.forEach((id) => { if (!call.peers[id]) createPeer(id, true); });
+    Object.keys(call.peers).forEach((id) => { if (ids.indexOf(id) === -1) dropPeer(id); });
+    renderTiles();
+  });
+  call.channel.on("broadcast", { event: "signal" }, async ({ payload }) => {
+    if (payload.to !== S.me) return;
+    const from = payload.from;
+    if (payload.kind === "offer") {
+      const pc = call.peers[from] ? call.peers[from].pc : createPeer(from, false).pc;
+      await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      signal(from, { kind: "answer", sdp: answer });
+    } else if (payload.kind === "answer") {
+      const p = call.peers[from];
+      if (p && p.pc.signalingState !== "stable") await p.pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+    } else if (payload.kind === "ice") {
+      const p = call.peers[from];
+      if (p) { try { await p.pc.addIceCandidate(new RTCIceCandidate(payload.candidate)); } catch (e) {} }
+    }
+  });
+  call.channel.subscribe(async (status) => {
+    if (status === "SUBSCRIBED") await call.channel.track({ id: S.me, name: nameOf(S.me), video: !!video });
+  });
+}
+
+function signal(to, body) {
+  if (!call.channel) return;
+  call.channel.send({ type: "broadcast", event: "signal", payload: Object.assign({ from: S.me, to }, body) });
+}
+
+function createPeer(id, initiator) {
+  const pc = new RTCPeerConnection(ICE);
+  const entry = { pc, stream: new MediaStream() };
+  call.peers[id] = entry;
+  if (call.local) call.local.getTracks().forEach((t) => pc.addTrack(t, call.local));
+  pc.onicecandidate = (e) => { if (e.candidate) signal(id, { kind: "ice", candidate: e.candidate }); };
+  pc.ontrack = (e) => {
+    e.streams[0].getTracks().forEach((t) => {
+      if (!entry.stream.getTracks().find((x) => x.id === t.id)) entry.stream.addTrack(t);
+    });
+    renderTiles();
+  };
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === "failed" || pc.connectionState === "closed") dropPeer(id);
+  };
+  pc.onnegotiationneeded = async () => {
+    if (!initiator) return;
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      signal(id, { kind: "offer", sdp: offer });
+    } catch (e) {}
+  };
+  if (initiator) {
+    (async () => {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      signal(id, { kind: "offer", sdp: offer });
+    })();
+  }
+  return entry;
+}
+
+function dropPeer(id) {
+  const p = call.peers[id];
+  if (!p) return;
+  try { p.pc.close(); } catch (e) {}
+  delete call.peers[id];
+  renderTiles();
+  sndLeave();
+}
+
+function renderTiles() {
+  const grid = $("call-grid");
+  grid.innerHTML = "";
+  const mine = el("div", "tile");
+  if (call.local && call.local.getVideoTracks().length && !call.camOff) {
+    const v = el("video");
+    v.srcObject = call.screen || call.local;
+    v.autoplay = true; v.muted = true; v.playsInline = true;
+    mine.appendChild(v);
+  } else {
+    mine.appendChild(el("div", "ph", esc(initials(nameOf(S.me)))));
+  }
+  mine.appendChild(el("div", "lbl", esc(nameOf(S.me)) + " (you)" + (call.muted ? " 🔇" : "")));
+  grid.appendChild(mine);
+
+  Object.keys(call.peers).forEach((id) => {
+    const p = call.peers[id];
+    const t = el("div", "tile");
+    if (p.stream.getVideoTracks().length) {
+      const v = el("video");
+      v.srcObject = p.stream;
+      v.autoplay = true; v.playsInline = true;
+      t.appendChild(v);
+    } else {
+      t.appendChild(el("div", "ph", esc(initials(nameOf(id)))));
+      const a = el("audio");
+      a.srcObject = p.stream;
+      a.autoplay = true;
+      t.appendChild(a);
+    }
+    t.appendChild(el("div", "lbl", esc(nameOf(id))));
+    grid.appendChild(t);
+  });
+}
+
+async function toggleCam() {
+  if (!call.active) return;
+  if (call.local && call.local.getVideoTracks().length) {
+    call.camOff = !call.camOff;
+    call.local.getVideoTracks().forEach((t) => (t.enabled = !call.camOff));
+    $("cb-cam").classList.toggle("off", call.camOff);
+    renderTiles();
+    return;
+  }
+  try {
+    const cam = await navigator.mediaDevices.getUserMedia({ video: true });
+    const track = cam.getVideoTracks()[0];
+    call.local.addTrack(track);
+    Object.keys(call.peers).forEach((id) => call.peers[id].pc.addTrack(track, call.local));
+    call.camOff = false;
+    $("cb-cam").classList.remove("off");
+    renderTiles();
+  } catch (e) { toast("Camera failed", "Could not access your camera"); }
+}
+
+async function toggleScreen() {
+  if (!call.active) return;
+  if (call.screen) {
+    call.screen.getTracks().forEach((t) => t.stop());
+    call.screen = null;
+    const camTrack = call.local.getVideoTracks()[0];
+    Object.keys(call.peers).forEach((id) => {
+      const sender = call.peers[id].pc.getSenders().find((s) => s.track && s.track.kind === "video");
+      if (sender && camTrack) sender.replaceTrack(camTrack);
+    });
+    renderTiles();
+    return;
+  }
+  try {
+    const st = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+    call.screen = st;
+    const track = st.getVideoTracks()[0];
+    track.onended = () => toggleScreen();
+    Object.keys(call.peers).forEach((id) => {
+      const pc = call.peers[id].pc;
+      const sender = pc.getSenders().find((s) => s.track && s.track.kind === "video");
+      if (sender) sender.replaceTrack(track);
+      else pc.addTrack(track, st);
+    });
+    call.camOff = false;
+    renderTiles();
+  } catch (e) {}
+}
+
+function endCall() {
+  if (!call.active) return;
+  Object.keys(call.peers).forEach((id) => { try { call.peers[id].pc.close(); } catch (e) {} });
+  call.peers = {};
+  if (call.local) call.local.getTracks().forEach((t) => t.stop());
+  if (call.screen) call.screen.getTracks().forEach((t) => t.stop());
+  call.local = null; call.screen = null;
+  if (call.channel) { sb.removeChannel(call.channel); call.channel = null; }
+  call.active = false; call.room = null;
+  $("call-layer").classList.add("hidden");
+  $("call-grid").innerHTML = "";
+  sndLeave();
+}
+
+const _openChannel = openChannel;
+openChannel = async function (id) { await _openChannel(id); subscribeRoom(); };
+const _openConversation = openConversation;
+openConversation = async function (id) { await _openConversation(id); subscribeRoom(); };
+
+async function boot() {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) {
+    $("auth").classList.remove("hidden");
+    $("app").classList.add("hidden");
+    return;
+  }
+  S.me = data.session.user.id;
+  $("auth").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  await loadEverything();
+  if (!S.profile) {
+    await sb.from("profiles").insert({
+      id: S.me,
+      username: (data.session.user.email || "user").split("@")[0],
+      display_name: (data.session.user.email || "user").split("@")[0],
+      friend_id: Math.random().toString(36).slice(2, 12).toUpperCase()
+    });
+    await loadEverything();
+  }
+  subscribeDB();
+  subscribePresence();
+  openHome();
+  if ("Notification" in window && Notification.permission === "default") {
+    setTimeout(() => Notification.requestPermission(), 3000);
+  }
+}
+
+window.addEventListener("beforeunload", () => {
+  if (presenceChannel) presenceChannel.untrack();
+  endCall();
+});
+
+sb.auth.onAuthStateChange((event) => {
+  if (event === "SIGNED_OUT") location.reload();
+});
+
+setAuthMode("login");
+boot();
+</script>
+</body>
+</html>
